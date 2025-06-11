@@ -5,6 +5,9 @@ context.scale(20, 20);
 const ROWS = 20;
 const COLS = 12;
 
+let holdPiece = null;
+let hasHeld = false;
+
 function arenaSweep() {
   outer: for (let y = ROWS - 1; y >= 0; --y) {
     for (let x = 0; x < COLS; ++x) {
@@ -115,15 +118,46 @@ function merge(arena, player) {
   });
 }
 
+function playerHold() {
+  if (hasHeld) return;
+  if (holdPiece === null) {
+    holdPiece = player.type;
+    playerReset();
+  } else {
+    const temp = player.type;
+    player.type = holdPiece;
+    player.matrix = createPiece(player.type);
+    holdPiece = temp;
+  }
+  player.pos.y = 0;
+  player.pos.x = ((COLS / 2) | 0) - ((player.matrix[0].length / 2) | 0);
+  hasHeld = true;
+  updateHoldDisplay();
+}
+
 function playerDrop() {
   player.pos.y++;
   if (collide(arena, player)) {
     player.pos.y--;
     merge(arena, player);
+    hasHeld = false;
     playerReset();
     arenaSweep();
     updateScore();
   }
+  dropCounter = 0;
+}
+
+function playerHardDrop() {
+  while (!collide(arena, player)) {
+    player.pos.y++;
+  }
+  player.pos.y--;
+  merge(arena, player);
+  hasHeld = false;
+  playerReset();
+  arenaSweep();
+  updateScore();
   dropCounter = 0;
 }
 
@@ -136,7 +170,8 @@ function playerMove(offset) {
 
 function playerReset() {
   const pieces = 'ILJOTSZ';
-  player.matrix = createPiece(pieces[(pieces.length * Math.random()) | 0]);
+  player.type = pieces[(pieces.length * Math.random()) | 0];
+  player.matrix = createPiece(player.type);
   player.pos.y = 0;
   player.pos.x = ((COLS / 2) | 0) - ((player.matrix[0].length / 2) | 0);
   if (collide(arena, player)) {
@@ -192,6 +227,10 @@ function updateScore() {
   document.getElementById('score').innerText = score;
 }
 
+function updateHoldDisplay() {
+  document.getElementById('hold').innerText = holdPiece || 'None';
+}
+
 const colors = [
   null,
   '#FF0D72',
@@ -207,11 +246,13 @@ const arena = createMatrix(COLS, ROWS);
 
 const player = {
   pos: { x: 0, y: 0 },
-  matrix: null
+  matrix: null,
+  type: null
 };
 
 playerReset();
 updateScore();
+updateHoldDisplay();
 update();
 
 document.addEventListener('keydown', event => {
@@ -221,9 +262,13 @@ document.addEventListener('keydown', event => {
     playerMove(1);
   } else if (event.keyCode === 40) {
     playerDrop();
+  } else if (event.keyCode === 38) {
+    playerHardDrop();
   } else if (event.keyCode === 81) {
     playerRotate(-1);
   } else if (event.keyCode === 87) {
     playerRotate(1);
+  } else if (event.keyCode === 67) {
+    playerHold();
   }
 });
