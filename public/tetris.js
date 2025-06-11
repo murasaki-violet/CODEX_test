@@ -108,6 +108,7 @@ function draw() {
 
   drawGrid();
   drawMatrix(arena, { x: 0, y: 0 });
+  drawGhost();
   drawMatrix(player.matrix, player.pos);
 }
 
@@ -120,6 +121,26 @@ function drawMatrix(matrix, offset) {
       }
     });
   });
+}
+
+function calculateGhostPosition() {
+  const ghost = {
+    pos: { x: player.pos.x, y: player.pos.y },
+    matrix: player.matrix
+  };
+  while (!collide(arena, ghost)) {
+    ghost.pos.y++;
+  }
+  ghost.pos.y--;
+  return ghost.pos;
+}
+
+function drawGhost() {
+  const pos = calculateGhostPosition();
+  context.save();
+  context.globalAlpha = 0.3;
+  drawMatrix(player.matrix, pos);
+  context.restore();
 }
 
 function drawGrid() {
