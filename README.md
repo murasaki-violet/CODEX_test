@@ -16,4 +16,4 @@ Start the server with:
 npm start
 ```
 
-This serves the files from the `public` directory on `http://localhost:3000`.
+This serves the files from the `docs` directory on `http://localhost:3000`.
