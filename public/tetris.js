@@ -7,6 +7,7 @@ const COLS = 12;
 
 let holdPiece = null;
 let hasHeld = false;
+let nextQueue = [];
 
 function arenaSweep() {
   outer: for (let y = ROWS - 1; y >= 0; --y) {
@@ -40,6 +41,18 @@ function createMatrix(w, h) {
     matrix.push(new Array(w).fill(0));
   }
   return matrix;
+}
+
+function randomPiece() {
+  const pieces = 'ILJOTSZ';
+  return pieces[(pieces.length * Math.random()) | 0];
+}
+
+function refillQueue() {
+  while (nextQueue.length < 5) {
+    nextQueue.push(randomPiece());
+  }
+  updateQueueDisplay();
 }
 
 function createPiece(type) {
@@ -93,6 +106,7 @@ function draw() {
   context.fillStyle = '#000';
   context.fillRect(0, 0, canvas.width, canvas.height);
 
+  drawGrid();
   drawMatrix(arena, { x: 0, y: 0 });
   drawMatrix(player.matrix, player.pos);
 }
@@ -106,6 +120,23 @@ function drawMatrix(matrix, offset) {
       }
     });
   });
+}
+
+function drawGrid() {
+  context.strokeStyle = '#333';
+  context.lineWidth = 0.05;
+  for (let x = 0; x <= COLS; ++x) {
+    context.beginPath();
+    context.moveTo(x, 0);
+    context.lineTo(x, ROWS);
+    context.stroke();
+  }
+  for (let y = 0; y <= ROWS; ++y) {
+    context.beginPath();
+    context.moveTo(0, y);
+    context.lineTo(COLS, y);
+    context.stroke();
+  }
 }
 
 function merge(arena, player) {
@@ -169,9 +200,10 @@ function playerMove(offset) {
 }
 
 function playerReset() {
-  const pieces = 'ILJOTSZ';
-  player.type = pieces[(pieces.length * Math.random()) | 0];
+  refillQueue();
+  player.type = nextQueue.shift();
   player.matrix = createPiece(player.type);
+  refillQueue();
   player.pos.y = 0;
   player.pos.x = ((COLS / 2) | 0) - ((player.matrix[0].length / 2) | 0);
   if (collide(arena, player)) {
@@ -231,6 +263,10 @@ function updateHoldDisplay() {
   document.getElementById('hold').innerText = holdPiece || 'None';
 }
 
+function updateQueueDisplay() {
+  document.getElementById('queue').innerText = nextQueue.join(' ');
+}
+
 const colors = [
   null,
   '#FF0D72',
@@ -253,6 +289,7 @@ const player = {
 playerReset();
 updateScore();
 updateHoldDisplay();
+updateQueueDisplay();
 update();
 
 document.addEventListener('keydown', event => {
